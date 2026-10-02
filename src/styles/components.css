@@ -1,0 +1,697 @@
+/* ============================================================================
+   Semantic component styles — buttons, fields, navigation, cards, skeletons,
+   breadcrumbs, pagination, notices. Restyled shadcn/ui primitives consume these
+   classes, so a Radix component and a plain element look identical.
+   No shadows, no rounding, no coloured panels.
+   ========================================================================== */
+/* Layer note: inside the components layer — this is what makes `md:hidden`, `md:grid-cols-*` and
+   friends able to override component defaults such as `.btn { display: inline-flex }`. */
+@layer components {
+
+  /* --- buttons ------------------------------------------------------------- */
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-block-size: 44px;              /* touch target floor */
+    padding-inline: var(--space-5);
+    border: 1px solid var(--line-emphasis-color);
+    background-color: var(--ink);
+    color: var(--surface);
+    font-size: var(--text-ui);
+    font-weight: var(--weight-ui);
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color var(--motion-fast) var(--ease-out),
+      color var(--motion-fast) var(--ease-out);
+  }
+
+  .btn:hover {
+    background-color: var(--surface);
+    color: var(--ink);
+  }
+
+  .btn[data-state='open'] {
+    background-color: var(--surface);
+    color: var(--ink);
+  }
+
+  .btn--quiet {
+    background-color: var(--surface);
+    color: var(--ink);
+    border-color: var(--line-structural-color);
+  }
+
+  .btn--quiet:hover {
+    border-color: var(--line-emphasis-color);
+  }
+
+  .btn--bare {
+    background-color: transparent;
+    color: var(--ink);
+    border-color: transparent;
+    padding-inline: var(--space-2);
+  }
+
+  .btn--bare:hover {
+    background-color: transparent;
+    border-color: var(--line-emphasis-color);
+  }
+
+  .btn--square {
+    inline-size: 44px;
+    min-inline-size: 44px;
+    padding: 0;
+  }
+
+  .btn:disabled,
+  .btn[aria-disabled='true'] {
+    color: var(--ink-disabled);
+    border-color: var(--line-structural-color);
+    background-color: var(--surface);
+    cursor: not-allowed;
+  }
+
+  /* --- fields -------------------------------------------------------------- */
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .field__label {
+    font-size: var(--text-label);
+    font-weight: var(--weight-label);
+    letter-spacing: var(--tracking-label);
+    color: var(--ink);
+  }
+
+  .field__control {
+    inline-size: 100%;
+    min-block-size: 44px;
+    padding: var(--space-3) 0;
+    border: 0;
+    border-block-end: var(--line-w) solid var(--line-structural-color);
+    background-color: transparent;
+    color: var(--ink);
+    font-family: var(--font-ui);
+    font-size: var(--text-body);
+    line-height: var(--leading-ui);
+    transition: border-color var(--motion-fast) var(--ease-out);
+  }
+
+  .field__control::placeholder {
+    color: var(--ink-faint);
+  }
+
+  .field__control:hover {
+    border-block-end-color: rgba(0, 0, 0, 0.45);
+  }
+
+  .field__control:focus {
+    outline: none;
+    border-block-end: 1px solid var(--line-emphasis-color);
+  }
+
+  .field__control:focus-visible {
+    outline: var(--focus-width) solid var(--ink);
+    outline-offset: 6px;
+  }
+
+  .field__control[aria-invalid='true'] {
+    border-block-end: 1px solid var(--ink);
+  }
+
+  .field__control:disabled {
+    color: var(--ink-disabled);
+    border-block-end-color: var(--line-structural-color);
+  }
+
+  .field__error {
+    font-size: var(--text-label);
+    font-weight: var(--weight-strong);
+    color: var(--ink);
+  }
+
+  .field__hint {
+    font-size: var(--text-caption);
+    color: var(--ink-secondary);
+  }
+
+  textarea.field__control {
+    min-block-size: 8rem;
+    resize: vertical;
+  }
+
+  /* Native select styled as an underline control (filters use the Radix Select). */
+  select.field__control {
+    appearance: none;
+    padding-inline-end: var(--space-6);
+    background-image: linear-gradient(45deg, transparent 50%, var(--ink) 50%),
+      linear-gradient(135deg, var(--ink) 50%, transparent 50%);
+    background-position:
+      calc(100% - 14px) 55%,
+      calc(100% - 9px) 55%;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+  }
+
+  [dir='rtl'] select.field__control {
+    background-position:
+      14px 55%,
+      9px 55%;
+  }
+
+  /* --- navigation ---------------------------------------------------------- */
+
+  .navbar {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 40;
+    inline-size: 100%;
+    background-color: var(--surface);
+  }
+
+  .navbar__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    min-block-size: 68px;
+  }
+
+  /* Long CMS labels must never widen the page: the nav column shrinks and the list
+     wraps instead. Identity and controls keep their intrinsic width, so no label can
+     push the language switch or the menu button off-screen. */
+  .navbar__nav {
+    display: flex;
+    flex: 1 1 auto;
+    justify-content: center;
+    min-inline-size: 0;
+  }
+
+  .navbar__list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    column-gap: var(--space-6);
+    row-gap: var(--space-1);
+  }
+
+  .navbar__identity {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+    gap: var(--space-3);
+    min-inline-size: 0;
+  }
+
+  .navbar__wordmark {
+    font-family: var(--font-brand);
+    font-size: var(--text-body-lg);
+    font-weight: var(--weight-strong);
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .nav-link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    padding-inline: var(--space-1);
+    /* Only breaks a word that cannot fit its line — never clips, never overflows. */
+    overflow-wrap: break-word;
+    color: var(--ink);
+    font-size: var(--text-ui);
+    font-weight: var(--weight-ui);
+    white-space: nowrap;
+  }
+
+  .nav-link:hover {
+    color: var(--ink);
+    text-decoration: underline;
+    text-underline-offset: 0.4em;
+    text-decoration-thickness: var(--line-w);
+  }
+
+  .nav-link[aria-current='page'] {
+    font-weight: var(--weight-strong);
+  }
+
+  /* Home menu row: hover/focus affordance is a real underline on the label (the
+     decorative mark is never the only signal) and a mirrored corner fragment that
+     follows the reading direction. */
+  .menu-row__label {
+    min-inline-size: 0;
+  }
+
+  .menu-row:hover .menu-row__label,
+  .menu-row:focus-visible .menu-row__label {
+    text-decoration: underline;
+    text-decoration-thickness: var(--line-w);
+    text-underline-offset: 0.35em;
+  }
+
+  .menu-row__mark {
+    position: relative;
+    display: block;
+    flex: 0 0 auto;
+    inline-size: 12px;
+    block-size: 12px;
+    color: var(--line-decor-color);
+  }
+
+  .menu-row__mark .mark {
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    position: absolute;
+  }
+
+  [dir='rtl'] .menu-row__mark {
+    transform: scaleX(-1);
+  }
+
+  .menu-row:hover .menu-row__mark,
+  .menu-row:focus-visible .menu-row__mark {
+    color: var(--ink);
+  }
+
+  /* --- mobile drawer ------------------------------------------------------- */
+
+  .drawer__overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background-color: rgba(0, 0, 0, 0.25);
+  }
+
+  .drawer__panel {
+    position: fixed;
+    inset-block: 0;
+    z-index: 51;
+    display: flex;
+    flex-direction: column;
+    inline-size: min(24rem, 88vw);
+    padding: var(--space-5) var(--gutter) calc(var(--space-6) + env(safe-area-inset-bottom));
+    background-color: var(--surface);
+    border-inline-start: var(--line-w) solid var(--line-structural-color);
+    overflow-y: auto;
+  }
+
+  [dir='rtl'] .drawer__panel {
+    inset-inline-end: 0;
+    border-inline-start: var(--line-w) solid var(--line-structural-color);
+    border-inline-end: 0;
+  }
+
+  [dir='ltr'] .drawer__panel {
+    inset-inline-start: 0;
+    border-inline-end: var(--line-w) solid var(--line-structural-color);
+    border-inline-start: 0;
+  }
+
+  .drawer__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding-block: var(--space-4);
+    border-block-end: var(--line-w) solid var(--line-structural-color);
+    font-size: var(--text-subheading);
+    font-weight: var(--weight-medium);
+  }
+
+  .drawer__row:hover {
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .drawer__row[aria-current='page'] {
+    font-weight: var(--weight-strong);
+  }
+
+  /* --- menu icon: two rules that become a sharp X --------------------------- */
+
+  .menu-icon {
+    position: relative;
+    inline-size: 26px;
+    block-size: 16px;
+  }
+
+  .menu-icon span {
+    position: absolute;
+    inset-inline: 0;
+    block-size: 1px;
+    background-color: var(--ink);
+    transition: transform var(--motion-base) var(--ease-out),
+      opacity var(--motion-fast) var(--ease-out);
+  }
+
+  .menu-icon span:first-child {
+    inset-block-start: 3px;
+  }
+
+  .menu-icon span:last-child {
+    inset-block-end: 3px;
+  }
+
+  .menu-icon[data-open='true'] span:first-child {
+    transform: translateY(4.5px) rotate(45deg);
+  }
+
+  .menu-icon[data-open='true'] span:last-child {
+    transform: translateY(-4.5px) rotate(-45deg);
+  }
+
+  /* --- cards --------------------------------------------------------------- */
+
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    min-inline-size: 0;
+  }
+
+  .card__caption {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-3);
+    min-inline-size: 0;
+  }
+
+  .card__title {
+    font-size: var(--text-ui);
+    font-weight: var(--weight-ui);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
+  .card__meta {
+    font-size: var(--text-meta);
+    color: var(--ink-secondary);
+    white-space: nowrap;
+  }
+
+  .card__link {
+    display: block;
+    color: inherit;
+  }
+
+  .card__link:hover {
+    text-decoration: none;
+  }
+
+  .card__link:hover .card__title {
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+    text-decoration-thickness: var(--line-w);
+  }
+
+  /* --- editorial rows (blog / education) ----------------------------------- */
+
+  .entry-row {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr);
+    gap: var(--space-4);
+    align-items: start;
+    padding-block: var(--space-5);
+    border-block-end: var(--line-w) solid var(--line-structural-color);
+  }
+
+  @media (min-width: 48rem) {
+    .entry-row {
+      grid-template-columns: 160px minmax(0, 1fr);
+      gap: var(--space-6);
+    }
+  }
+
+  .entry-row__thumb {
+    inline-size: 100%;
+    aspect-ratio: 4 / 3;
+  }
+
+  /* Education rows read as horizontal entries on mobile too, with a small thumb. */
+  .entry-row--compact {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+
+  /* --- breadcrumbs --------------------------------------------------------- */
+
+  .breadcrumbs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    padding-block: var(--space-5) var(--space-6);
+    font-size: var(--text-meta);
+    color: var(--ink-secondary);
+    list-style: none;
+  }
+
+  .breadcrumbs a {
+    color: var(--ink-secondary);
+    text-decoration: none;
+  }
+
+  .breadcrumbs a:hover {
+    color: var(--ink);
+    text-decoration: underline;
+    text-underline-offset: 0.3em;
+  }
+
+  .breadcrumbs [aria-current='page'] {
+    color: var(--ink);
+    max-inline-size: 46ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .breadcrumbs__sep {
+    color: var(--ink-faint);
+  }
+
+  /* --- pagination ---------------------------------------------------------- */
+
+  .pagination {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding-block: var(--space-10);
+  }
+
+  .pagination__item {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-inline-size: 40px;
+    min-block-size: 40px;
+    padding-inline: var(--space-2);
+    border: var(--line-w) solid transparent;
+    color: var(--ink);
+    font-size: var(--text-ui);
+  }
+
+  .pagination__item:hover {
+    border-color: var(--line-emphasis-color);
+    text-decoration: none;
+  }
+
+  .pagination__item[aria-current='page'] {
+    border-color: var(--line-emphasis-color);
+    font-weight: var(--weight-strong);
+  }
+
+  .pagination__item[aria-disabled='true'] {
+    color: var(--ink-disabled);
+  }
+
+  /* --- filter controls ----------------------------------------------------- */
+
+  .filter-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .filter-chip {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 40px;
+    padding-inline: var(--space-4);
+    border: var(--line-w) solid var(--line-structural-color);
+    color: var(--ink);
+    font-size: var(--text-ui);
+    background-color: var(--surface);
+  }
+
+  .filter-chip:hover {
+    border-color: var(--line-emphasis-color);
+    text-decoration: none;
+  }
+
+  .filter-chip[aria-current='true'],
+  .filter-chip[data-active='true'] {
+    border-color: var(--line-emphasis-color);
+    font-weight: var(--weight-strong);
+  }
+
+  /* --- notices / empty states ---------------------------------------------- */
+
+  .notice {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-6);
+    border: var(--line-w) solid var(--line-structural-color);
+  }
+
+  .notice--plain {
+    border: 0;
+    padding-inline: 0;
+  }
+
+  /* --- skeletons ----------------------------------------------------------- */
+
+  /* The pulse lives on the *region*, not on each bar: bars are inserted in different
+     frames (and at different depths), so a per-element animation leaves the block and
+     its caption breathing out of phase — which reads as a rendering glitch. One region,
+     one timeline. */
+  .skeleton {
+    background-color: var(--line-skeleton-color);
+  }
+
+  .skeleton-region {
+    animation: skeleton-pulse 1.6s var(--ease-in-out) infinite;
+  }
+
+  .skeleton--text {
+    block-size: 0.75em;
+  }
+
+  @keyframes skeleton-pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.45;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton-region {
+      animation: none;
+      opacity: 1;
+    }
+  }
+
+  /* --- Radix surfaces: dialog, select, accordion (square, white, hairline) --- */
+
+  .surface-panel {
+    background-color: var(--surface);
+    border: var(--line-w) solid var(--line-structural-color);
+    color: var(--ink);
+  }
+
+  .select__trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    min-block-size: 40px;
+    padding-inline: var(--space-3);
+    border: var(--line-w) solid var(--line-structural-color);
+    background-color: var(--surface);
+    font-size: var(--text-ui);
+  }
+
+  .select__trigger:hover {
+    border-color: var(--line-emphasis-color);
+  }
+
+  .select__content {
+    z-index: 60;
+    min-inline-size: var(--radix-select-trigger-width);
+    background-color: var(--surface);
+    border: var(--line-w) solid var(--line-structural-color);
+  }
+
+  .select__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    font-size: var(--text-ui);
+    cursor: pointer;
+  }
+
+  .select__item[data-highlighted] {
+    background-color: var(--line-skeleton-color);
+    outline: none;
+  }
+
+  .select__item[data-state='checked'] {
+    font-weight: var(--weight-strong);
+  }
+
+  .accordion__item {
+    border-block-end: var(--line-w) solid var(--line-structural-color);
+  }
+
+  .accordion__trigger {
+    display: flex;
+    inline-size: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding-block: var(--space-5);
+    text-align: start;
+    font-size: var(--text-subheading);
+    font-weight: var(--weight-medium);
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .accordion__content {
+    padding-block-end: var(--space-5);
+    color: var(--ink-secondary);
+  }
+
+  /* --- media gallery ------------------------------------------------------- */
+
+  .gallery-item {
+    position: relative;
+    inline-size: 100%;
+  }
+
+  .gallery-item--button {
+    cursor: zoom-in;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  /* --- long URLs / latin runs inside Persian copy --------------------------- */
+
+  .link-inline {
+    color: var(--ink);
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+    text-decoration-thickness: var(--line-w);
+    overflow-wrap: anywhere;
+  }
+
+}

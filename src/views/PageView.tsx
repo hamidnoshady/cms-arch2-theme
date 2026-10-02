@@ -1,0 +1,79 @@
+import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
+
+import { Blocks } from '@/components/blocks/Blocks'
+import { RichText } from '@/components/blocks/RichText'
+import { ContentContainer } from '@/components/design/Container'
+import { CmsImage } from '@/components/media/CmsImage'
+import { getPageBySlug } from '@/lib/cms/endpoints'
+import { loadPageContext } from '@/lib/cms/pageContext'
+import { pagePath } from '@/lib/runtime'
+import { breadcrumbsFor } from '@/lib/routing/breadcrumbs'
+import { resolveThemeRoute } from '@/lib/routing/resolve'
+import { metadataFor } from '@/lib/seo/metadata'
+import { labels as dictionary } from '@/lib/theme/labels'
+import { href } from '@/lib/routing/locale'
+import { isMedia } from '@/lib/utils/media'
+import { InteriorPage } from '@/views/InteriorPage'
+import { StateView } from '@/views/StateView'
+import type { Locale } from '@/lib/cms/types'
+
+/**
+ * Generic CMS page (the catch-all). One canonical URL per document: a page whose slug
+ * is a theme section (`about`, `contact`, `projects`…) is served by that section's
+ * route, so reaching it through its own slug would be a second URL for the same
+ * content — the route layer redirects those before this view runs.
+ */
+export const pageMetadata = async (locale: Locale, slug: string): Promise<Metadata> => {
+  const outcome = await loadPageContext(locale, pagePath(slug))
+  if (!outcome.ok) return { robots: { follow: false, index: false } }
+  const page = await getPageBySlug(slug, locale, outcome.ctx.draft)
+  if (!page) return { robots: { follow: false, index: false } }
+  return metadataFor({
+    context: outcome.ctx,
+    description: page.meta?.description ?? null,
+    image: isMedia(page.meta?.image) ? page.meta.image : null,
+    path: pagePath(page.slug),
+    title: page.title,
+  })
+}
+
+export const PageView = async ({ locale, slug }: { locale: Locale; slug: string }) => {
+  const outcome = await loadPageContext(locale, pagePath(slug))
+  if (!outcome.ok) return <StateView locale={locale} outcome={outcome} />
+  const ctx = outcome.ctx
+  const page = await getPageBySlug(slug, locale, ctx.draft)
+  if (!page) notFound()
+  const t = dictionary(locale)
+
+  const heroMedia = isMedia(page.hero?.media) ? page.hero.media : null
+  const route = resolveThemeRoute([slug], ctx.site)
+  const crumbs = breadcrumbsFor(route, ctx.site, page.title)
+  const showHero = page.hero?.type !== 'none' && page.hero?.type !== 'lowImpact'
+
+  return (
+    <InteriorPage
+      context={ctx}
+      crumbs={crumbs}
+      currentPath={pagePath(page.slug)}
+      label={t.breadcrumb}
+      locale={locale}
+      switchDoc={{ id: page.id, kind: 'page', pathForLocale: (target) => href(pagePath(page.slug), target, ctx.site) }}
+    >
+      <ContentContainer>
+        <h1 className="type-title max-w-[30ch]">{page.title}</h1>
+        {page.hero?.richText ? (
+          <div className="mt-6">
+            <RichText content={page.hero.richText} context={ctx} fallbackDir={ctx.dir} />
+          </div>
+        ) : null}
+        {showHero && heroMedia ? (
+          <div className="frame mt-10" style={{ aspectRatio: heroMedia.width && heroMedia.height ? `${heroMedia.width} / ${heroMedia.height}` : '3 / 2' }}>
+            <CmsImage className="frame__media" media={heroMedia} origin={ctx.site.media.origin} priority sizes="100vw" />
+          </div>
+        ) : null}
+      </ContentContainer>
+      <Blocks blocks={page.layout} context={ctx} />
+    </InteriorPage>
+  )
+}
