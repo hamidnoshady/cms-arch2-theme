@@ -41,6 +41,7 @@ the resulting screenshots look fine while measuring nothing.
 | Unit/integration tests | `npm test` | **9 files, 89 tests, all passing** |
 | Production build | `npm run build` | Next 16.3.8, compiles, all routes emitted |
 | Browser evidence | `node scripts/screenshots.mjs` | **40 shots, 0 failures**, no page errors, no horizontal overflow |
+| Interaction behaviour | `node scripts/interaction-audit.mjs` | **9/9 checks pass** (keyboard + click entry, no intro replay, focus trap, Escape + focus restoration, scroll-lock cleanup, close on navigation, no double submit, values preserved on failure) |
 | Structural a11y | `npm run a11y` | **17/17 pages clean** (one `h1`, a `<main>`, no skipped heading levels, no missing/empty `alt`, no duplicate ids, no sub-24px target, no sub-4.5 contrast on body text) |
 | Manifest | `tests/manifest.test.ts` + the CMS's own parser | accepted (§5) |
 
@@ -119,6 +120,27 @@ theme opts standalone navigational links (headings, list rows, contact details, 
 into the floor with `.target-standalone`. The report is written to
 `docs/screenshots/a11y-report.json` and the script exits non-zero on any failure.
 
+### Interaction behaviour (`node scripts/interaction-audit.mjs`)
+
+The brief asks for behaviour that no screenshot can prove, so it is driven in a real
+browser and asserted:
+
+| Check | Result |
+| --- | --- |
+| The Enter control is visible and ≥24px before any interaction | 44px |
+| A keypress on the entrance opens the menu | 6 rows |
+| Clicking the Enter control opens the menu | pass |
+| The intro never replays once entered | pass |
+| Tab stays inside the open drawer (14 tabs) | pass |
+| Escape closes it, focus returns to the header, no scroll lock left behind | pass |
+| Navigating from the drawer closes it | pass |
+| A double submit reaches the CMS exactly once | 1 POST |
+| A failed submit keeps the entered values | pass |
+
+Report: `docs/screenshots/interaction-report.json`; the script exits non-zero on failure.
+Both browser scripts refuse to run against a server whose own CSS/JS 500s, because an
+unstyled page manufactures defects that do not exist (see regression item 23).
+
 ### How the hard cases were made observable
 
 Two of the brief's requirements are only *checkable* with deliberate setup, so the harness
@@ -173,7 +195,7 @@ identifier is neutral.
 
 ## 6. Regression list — real defects found and fixed during this work
 
-Each was reproduced in a browser or by a failing test before being fixed (22 items).
+Each was reproduced in a browser or by a failing test before being fixed (24 items).
 
 1. **CSS layers.** `styles/*.css` were unlayered and outranked Tailwind utilities, so
    `md:hidden` and `md:grid-cols-*` silently did nothing (the hamburger showed at 1440px).
@@ -237,7 +259,17 @@ Each was reproduced in a browser or by a failing test before being fixed (22 ite
 21. **No skip link.** The shell exposed `<main id="content">` but nothing linked to it, so a
     keyboard visitor had to walk the whole navbar. A focus-revealed skip link is now the
     first tab stop on interior pages.
-22. **Dead end without JavaScript.** The entrance's menu is a client state change and the logo,
+22. **A checkbox with no `name`.** Every other field in the contact form carried its CMS
+    field name; the checkbox was the only control that did not, so it could not be found or
+    submitted by name. Now rendered like its siblings.
+23. **A stale asset manifest looks like a theme bug.** `next build` wipes
+    `.next/standalone/`, and a server booted before it keeps serving the *old* asset
+    hashes while the static directory holds the new ones — HTML 200s and every
+    `/_next/static/*` request 500s. Two browser audits then "found" an unstyled, 21px
+    Enter control and a lost form submission, neither of which exists on a healthy build.
+    `qa-servers.sh` now verifies a real CSS/JS asset per theme at startup, and both
+    browser audits refuse to run until the served stylesheet returns `text/css`.
+24. **Dead end without JavaScript.** The entrance's menu is a client state change and the logo,
     rule and cue are server-rendered at `opacity: 0`, so a visitor with scripting off saw a
     blank stage and no way into the site. A `<noscript>` menu now lists the same CMS
     destinations and a no-script stylesheet reveals the stage — captured as shot 40.

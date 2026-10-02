@@ -116,6 +116,29 @@ const audit = async (page) => page.evaluate(() => {
   return out
 })
 
+/**
+ * Fail fast when the page's own assets are not being served.
+ *
+ * A theme that answers 200 for HTML but 500 for `/_next/static/*` renders an unstyled,
+ * unhydrated page — every measurement below then reports a defect that does not exist in
+ * the theme at all. The usual cause is a server booted before the last `next build`:
+ * the process holds the old asset manifest while the static directory has new hashes.
+ */
+const assertAssetsServed = async (page, base) => {
+  await page.goto(`${base}/`, { waitUntil: 'domcontentloaded' })
+  const href = await page.evaluate(() =>
+    document.querySelector('link[rel="stylesheet"]')?.getAttribute('href') ?? '',
+  )
+  if (!href) return
+  const response = await page.goto(new URL(href, base).toString(), { waitUntil: 'domcontentloaded' })
+  const type = response?.headers()['content-type'] ?? ''
+  if (response?.status() !== 200 || !type.includes('text/css')) {
+    throw new Error(
+      `assets are not being served (${href} → ${response?.status()} ${type}). Restart the theme servers on the current build: bash scripts/qa-servers.sh --reset, then re-run.`,
+    )
+  }
+}
+
 const main = async () => {
   const { default: chromium } = await import('@sparticuz/chromium')
   const exe = await chromium.executablePath()
@@ -125,6 +148,7 @@ const main = async () => {
     executablePath: exe,
     headless: true,
   })
+  await assertAssetsServed(await browser.newPage(), BASE)
   const results = []
   for (const path of PATHS) {
     const page = await browser.newPage()

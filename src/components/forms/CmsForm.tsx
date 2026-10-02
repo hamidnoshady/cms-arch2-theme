@@ -183,6 +183,7 @@ const Field = ({
             aria-invalid={error ? true : undefined}
             checked={value === true}
             id={id}
+            name={field.name}
             onChange={(event) => onChange(event.target.checked)}
             required={required}
             type="checkbox"

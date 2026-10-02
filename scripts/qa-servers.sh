@@ -100,5 +100,38 @@ theme "unreachable"     3600 4099   # deliberately dead port
 theme "no logo"         3700 4016
 theme "long labels"     3800 4017
 
+# Startup health check: a theme that answers 200 for HTML but 500 for its own
+# `/_next/static/*` looks fine in a browser tab and breaks every interaction check, and
+# the usual cause is invisible — `next build` wipes `.next/standalone/`, so the static
+# copy has to be re-made with `npm run prepare:standalone` before the servers start.
+# Fail loudly here instead of leaving a half-serving topology behind.
+health_check() {
+  local port=$1
+  local html
+  html=$(curl -s --max-time 10 "http://127.0.0.1:$port/" || true)
+  local asset
+  asset=$(printf '%s' "$html" | grep -o '/_next/static/chunks/[^" ]*\.js' | head -1)
+  if [[ -z "$asset" ]]; then
+    echo "[qa] :$port answered no HTML — check its log" >&2
+    return 1
+  fi
+  local code
+  code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "http://127.0.0.1:$port$asset" || true)
+  if [[ "$code" != '200' ]]; then
+    echo "[qa] :$port serves HTML but $asset returns $code — re-run with --build" >&2
+    return 1
+  fi
+  return 0
+}
+
+for _ in $(seq 1 20); do
+  if curl -s -o /dev/null --max-time 2 http://127.0.0.1:3300/; then break; fi
+  sleep 0.5
+done
+
+for port in 3300 3400 3500 3700 3800; do
+  health_check "$port" || echo "[qa] warning: :$port is not serving assets" >&2
+done
+
 echo '[qa] scenario servers up — Ctrl-C to stop'
 wait
