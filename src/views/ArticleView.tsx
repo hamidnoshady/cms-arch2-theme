@@ -117,7 +117,7 @@ export const ArticleView = async ({
             {await Promise.all(
               related.map(async (entry) => (
                 <li className="border-t border-line-structural pt-4" key={entry.id}>
-                  <a className="link-inline type-ui" href={href(await postHref(entry, ctx), locale, ctx.site)}>
+                  <a className="link-inline type-ui target-standalone" href={href(await postHref(entry, ctx), locale, ctx.site)}>
                     {entry.title}
                   </a>
                 </li>

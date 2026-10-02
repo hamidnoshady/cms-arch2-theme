@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { SiteFooter } from '@/components/layout/SiteFooter'
 import { SiteHeader } from '@/components/layout/SiteHeader'
 import type { SiteContext } from '@/lib/cms/context'
+import { labels } from '@/lib/theme/labels'
 import type { NavLink } from '@/lib/routing/nav'
 import type { SwitchTarget } from '@/lib/seo/translations'
 
@@ -27,6 +28,11 @@ export const InteriorShell = ({
   switchTargets: SwitchTarget[]
 }) => (
   <div className="flex min-h-svh flex-col">
+    {/* First tab stop on every interior page: a keyboard visitor can leave the navbar
+        without walking through the whole menu. Visually hidden until focused. */}
+    <a className="skip-link" href="#content">
+      {labels(context.locale).skipToContent}
+    </a>
     <SiteHeader context={context} links={headerLinks} logo={logo} switchTargets={switchTargets} />
     <main className="flex-1" id="content">
       {children}

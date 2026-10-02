@@ -39,7 +39,7 @@ export const renderBlockNode = (node: LexicalNode, context: SiteContext): ReactN
         <aside className="notice">
           <RichTextContent content={content} context={context} />
           {url ? (
-            <a className="link-inline type-ui" href={url} rel="noreferrer" target="_blank">
+            <a className="link-inline type-ui target-standalone" href={url} rel="noreferrer" target="_blank">
               {url}
             </a>
           ) : null}

@@ -187,7 +187,7 @@ const Field = ({
             required={required}
             type="checkbox"
           />
-          <label className="field__label" htmlFor={id}>
+          <label className="field__label field__check-label" htmlFor={id}>
             {label}
           </label>
         </div>

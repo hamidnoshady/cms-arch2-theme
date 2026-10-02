@@ -124,7 +124,7 @@ export const ProjectDetailView = async ({ locale, slug }: { locale: Locale; slug
           <ul className="grid gap-4 md:grid-cols-3">
             {related.map((entry) => (
               <li className="border-t border-line-structural pt-4" key={entry.id}>
-                <a className="link-inline type-ui" href={href(projectPath(entry.slug), locale, ctx.site)}>
+                <a className="link-inline type-ui target-standalone" href={href(projectPath(entry.slug), locale, ctx.site)}>
                   {entry.title}
                 </a>
                 <p className="type-meta mt-2">{lexicalText(entry.content as never).slice(0, 90)}…</p>

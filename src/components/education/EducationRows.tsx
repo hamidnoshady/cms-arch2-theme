@@ -39,7 +39,7 @@ export const EducationFeatured = ({
         <div>
           <p className="type-label">{context.locale === 'fa' ? 'شاخص' : 'Featured'}</p>
           <h2 className="type-heading mt-3 max-w-[26ch]">
-            <Link className="link-inline" href={href}>
+            <Link className="link-inline target-standalone" href={href}>
               {post.title}
             </Link>
           </h2>
@@ -92,7 +92,7 @@ export const EducationRow = ({
       </span>
       <div className="min-w-0">
         <h3 className="type-ui">
-          <Link className="link-inline" href={href}>
+          <Link className="link-inline target-standalone" href={href}>
             {post.title}
           </Link>
         </h3>

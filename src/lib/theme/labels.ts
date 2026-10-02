@@ -42,8 +42,8 @@ type Dictionary = {
   search: string
   searchEmpty: string
   searchPlaceholder: string
-  scrollCue: string
   skipToContent: string
+  scrollCue: string
   holdingTitle: string
   holdingBody: string
   unreachableTitle: string

@@ -75,7 +75,7 @@ export const SearchView = async ({ locale, query }: { locale: Locale; query: str
             {hits.map((hit) => (
               <li className="entry-row" key={hit.id}>
                 <div className="min-w-0">
-                  <a className="link-inline type-subheading" href={href(articlePath(hit.slug), locale, ctx.site)}>
+                  <a className="link-inline type-subheading target-standalone" href={href(articlePath(hit.slug), locale, ctx.site)}>
                     {hit.title}
                   </a>
                   {hit.meta?.description ? (

@@ -32,7 +32,7 @@ export const EmptyState = ({
       <p className="type-body max-w-[46ch] ps-4 text-ink-secondary md:ps-6">{body ?? t.emptyArchiveBody}</p>
       {action ? (
         <p className="ps-4 md:ps-6">
-          <Link className="link-inline type-ui" href={action.href}>
+          <Link className="link-inline type-ui target-standalone" href={action.href}>
             {action.label}
           </Link>
         </p>

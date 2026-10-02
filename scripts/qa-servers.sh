@@ -10,6 +10,11 @@
 #
 #   bash scripts/qa-servers.sh          # start everything (Ctrl-C stops it again)
 #   bash scripts/qa-servers.sh --build  # rebuild + repackage the standalone output first
+#   bash scripts/qa-servers.sh --reset  # free this script's ports first, then start
+#
+# `--reset` exists because a stale topology is otherwise sticky: the preflight below refuses
+# to start, and the leftover processes hold *only* these ports. It never touches anything
+# outside the list it owns.
 #
 # Then, in another shell:
 #   node scripts/screenshots.mjs --base http://127.0.0.1:3200 --scale 2
@@ -19,10 +24,25 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-if [[ "${1:-}" == '--build' ]]; then
-  npm run build
-  ARCH2_INCLUDE_QA=1 npm run prepare:standalone
-fi
+PORTS=(3300 3400 3500 3600 3700 3800 4013 4014 4015 4016 4017)
+
+for argument in "$@"; do
+  case "$argument" in
+    --build)
+      npm run build
+      ARCH2_INCLUDE_QA=1 npm run prepare:standalone
+      ;;
+    --reset)
+      for port in "${PORTS[@]}"; do
+        # `ss -H` with a sport filter: one pid per port, nothing else is touched.
+        while read -r pid; do
+          [[ -n "$pid" ]] && kill "$pid" 2>/dev/null && echo "[qa] freed :$port (pid $pid)"
+        done < <(ss -ltnpH "sport = :$port" 2>/dev/null | grep -oP 'pid=\K[0-9]+' | sort -u)
+      done
+      sleep 2
+      ;;
+  esac
+done
 
 if [[ ! -f .next/standalone/server.js ]]; then
   echo "no .next/standalone/server.js — run: npm run build && ARCH2_INCLUDE_QA=1 npm run prepare:standalone" >&2
@@ -31,7 +51,7 @@ fi
 
 # Preflight: a half-bound topology photographs the wrong thing (an EADDRINUSE mock dies
 # and the theme then talks to whatever still holds the port). Refuse instead of guessing.
-for port in 3300 3400 3500 3600 3700 3800 4013 4014 4015 4016 4017; do
+for port in "${PORTS[@]}"; do
   if (exec 3<>"/dev/tcp/127.0.0.1/$port") 2>/dev/null; then
     exec 3>&- 2>/dev/null || true
     echo "port $port is already in use — stop the previous QA topology first" >&2

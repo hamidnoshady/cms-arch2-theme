@@ -136,9 +136,10 @@ export const HomeStage = ({
   const fast = reduced ? 0.01 : 0.42
 
   return (
-    <div
+    <main
       className="stage"
       dir={dir}
+      id="content"
       ref={stageRef}
       style={menuOpen ? { minBlockSize: '100svh', overflow: 'visible' } : undefined}
     >
@@ -173,7 +174,7 @@ export const HomeStage = ({
             initial={false}
             transition={{ duration: fast, ease: [0.22, 0.61, 0.36, 1] }}
           >
-            <motion.div
+            <motion.h1
               animate={{ opacity: 1 }}
               className="stage-intro-fx flex max-w-[26rem] items-center justify-center px-6"
               initial={{ opacity: 0 }}
@@ -189,7 +190,7 @@ export const HomeStage = ({
                   {name}
                 </span>
               )}
-            </motion.div>
+            </motion.h1>
           </motion.div>
 
           {/* The theme's own drawn rule — the only line that animates. */}
@@ -297,6 +298,6 @@ export const HomeStage = ({
           {links.length === 0 ? <Rule className="mt-2" /> : null}
         </motion.nav>
       ) : null}
-    </div>
+    </main>
   )
 }

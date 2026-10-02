@@ -186,6 +186,8 @@ vendor/           vendored @eshobe/site-runtime (see PROVENANCE.md)
   (`ok`, `empty`, `holding`, `nologo`, `longlabels`) and transport switches (`slow`, `fail`).
 - `qa-servers.sh` — brings up the whole scenario topology (ports 3300–3800) with a port
   preflight, so a half-bound run cannot quietly measure the wrong thing.
+- `a11y-audit.mjs` — `npm run a11y`: structural checks over 17 routes (one `h1`, a `<main>`,
+  heading order, image `alt`, duplicate ids, WCAG 2.2 target sizes, text contrast)
 - `screenshots.mjs` — the browser harness: 40 named shots, overflow and console-error
   assertions, per-shot expectations, network throttling for skeleton captures.
 - `make-qa-media.sh` — regenerates the synthetic colour placeholders in `public/qa/media/`.

@@ -141,7 +141,7 @@ const ContentBlock = async ({ context, row }: { context: SiteContext; row: Block
           <div key={`column-${index}`}>
             <RichText content={column.richText as never} context={context} fallbackDir={context.dir} />
             {column.enableLink && column.link ? (
-              <Link className="link-inline type-ui mt-4 inline-block" href={linkHref(column.link)}>
+              <Link className="link-inline type-ui mt-4 target-standalone" href={linkHref(column.link)}>
                 {linkLabel(column.link)}
               </Link>
             ) : null}
@@ -267,7 +267,7 @@ const ContactBlock = ({ context, row }: { context: SiteContext; row: BlockRow })
     entries.push({
       label: 'Email',
       value: (
-        <a className="link-inline" dir="ltr" href={`mailto:${row.email}`}>
+        <a className="link-inline target-standalone" dir="ltr" href={`mailto:${row.email}`}>
           {row.email}
         </a>
       ),
@@ -279,7 +279,7 @@ const ContactBlock = ({ context, row }: { context: SiteContext; row: BlockRow })
       value: (
         <span className="flex flex-wrap gap-x-4 gap-y-1">
           {phones.map((phone) => (
-            <a className="link-inline" dir="ltr" href={`tel:${phone.replace(/\s+/gu, '')}`} key={phone}>
+            <a className="link-inline target-standalone" dir="ltr" href={`tel:${phone.replace(/\s+/gu, '')}`} key={phone}>
               {toLocaleDigits(phone, context.locale)}
             </a>
           ))}
@@ -294,7 +294,7 @@ const ContactBlock = ({ context, row }: { context: SiteContext; row: BlockRow })
     entries.push({
       label: t.map,
       value: (
-        <a className="link-inline" href={row.mapUrl} rel="noreferrer" target="_blank">
+        <a className="link-inline target-standalone" href={row.mapUrl} rel="noreferrer" target="_blank">
           {t.map}
         </a>
       ),

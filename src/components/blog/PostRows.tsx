@@ -36,7 +36,7 @@ export const LeadStory = ({
       <DecorativeMark className="top-1 -start-1 hidden md:block" variant="crosshair" />
       <p className="type-label ps-4 md:ps-6">{context.locale === 'fa' ? 'یادداشت شاخص' : 'Lead story'}</p>
       <h2 className="type-heading mt-3 max-w-[30ch] ps-4 md:ps-6">
-        <Link className="link-inline" href={href}>
+        <Link className="link-inline target-standalone" href={href}>
           {post.title}
         </Link>
       </h2>
@@ -105,7 +105,7 @@ export const ArticleRow = ({
       </span>
       <div className="min-w-0">
         <h3 className="type-subheading">
-          <Link className="link-inline" href={href}>
+          <Link className="link-inline target-standalone" href={href}>
             {post.title}
           </Link>
         </h3>

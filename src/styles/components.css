@@ -89,6 +89,16 @@
     color: var(--ink);
   }
 
+  /* A checkbox with an associated label is one target, and the label is the larger
+     half of it — but its own box can sit under 24px. Give it the floor and a pointer
+     affordance. */
+  .field__check-label {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 1.5rem;
+    cursor: pointer;
+  }
+
   .field__control {
     inline-size: 100%;
     min-block-size: 44px;
@@ -443,6 +453,27 @@
     grid-template-columns: 72px minmax(0, 1fr);
   }
 
+  /* --- skip link ----------------------------------------------------------- */
+
+  /* Hidden until focused, then a plain square black-on-white control sitting over the
+     navbar. Not `display:none`, so it stays in the tab order. */
+  .skip-link {
+    position: absolute;
+    inset-block-start: var(--space-2);
+    inset-inline-start: var(--gutter);
+    z-index: 60;
+    padding: var(--space-2) var(--space-4);
+    background: var(--surface);
+    border: var(--line-w) solid var(--ink);
+    color: var(--ink);
+    font-size: var(--text-ui);
+    transform: translateY(-200%);
+  }
+
+  .skip-link:focus-visible {
+    transform: translateY(0);
+  }
+
   /* --- breadcrumbs --------------------------------------------------------- */
 
   .breadcrumbs {
@@ -456,7 +487,14 @@
     list-style: none;
   }
 
+  /* WCAG 2.2 target size (minimum) is 24×24: a breadcrumb link is 23px tall on its
+     own at this type size, so it gets the floor explicitly. */
   .breadcrumbs a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-block-size: 1.5rem;
+    min-inline-size: 1.5rem;
     color: var(--ink-secondary);
     text-decoration: none;
   }
@@ -685,6 +723,16 @@
   }
 
   /* --- long URLs / latin runs inside Persian copy --------------------------- */
+
+  /* WCAG 2.2 SC 2.5.8 (AA) wants pointer targets of at least 24×24 CSS px. A link
+     inside a sentence is exempt by the same criterion, so prose keeps its natural line
+     box and the floor is applied *deliberately* to standalone navigational links:
+     headings, list items, contact rows, footer links. */
+  .target-standalone {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 1.5rem;
+  }
 
   .link-inline {
     color: var(--ink);

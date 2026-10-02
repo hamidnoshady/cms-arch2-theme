@@ -41,6 +41,7 @@ the resulting screenshots look fine while measuring nothing.
 | Unit/integration tests | `npm test` | **9 files, 89 tests, all passing** |
 | Production build | `npm run build` | Next 16.3.8, compiles, all routes emitted |
 | Browser evidence | `node scripts/screenshots.mjs` | **40 shots, 0 failures**, no page errors, no horizontal overflow |
+| Structural a11y | `npm run a11y` | **17/17 pages clean** (one `h1`, a `<main>`, no skipped heading levels, no missing/empty `alt`, no duplicate ids, no sub-24px target, no sub-4.5 contrast on body text) |
 | Manifest | `tests/manifest.test.ts` + the CMS's own parser | accepted (§5) |
 
 `npm run verify` chains typecheck → lint → test → build. Lint is *inside* verify (it is not
@@ -98,6 +99,26 @@ excluded), and any of the four failing fails the chain.
 | 34–38 | interior pages at 390 | education, article, about, contact, and the English mirror |
 | 40 | `no-js-home-1440` | JavaScript disabled: the entrance's `<noscript>` menu offers every CMS destination, and the mark/rule/cue are revealed by the no-script stylesheet instead of staying at `opacity:0` |
 
+### Structural accessibility (`npm run a11y`)
+
+The screenshots prove what a page looks like; `scripts/a11y-audit.mjs` proves what a
+picture cannot, in a real browser over 17 routes (both locales):
+
+| Check | Rule | Result |
+| --- | --- | --- |
+| Exactly one `h1` per page | document outline | 17/17 |
+| A `<main>` landmark | WCAG 1.3.1 / 2.4.1 | 17/17 |
+| No skipped heading levels | heading order | 17/17 |
+| Every `<img>` has an `alt`; no large image with an empty one | WCAG 1.1.1 | 17/17 |
+| No duplicate `id` | WCAG 4.1.1 | 17/17 |
+| Target ≥ 24×24 (an associated `<label>` counts as part of its control) | WCAG 2.2 SC 2.5.8 (AA) | 17/17 |
+| Body text ≥ 4.5:1 against its resolved background | WCAG 2.5.5 / 1.4.3 | 17/17 |
+
+Links inside a running sentence are exempt from SC 2.5.8 by the criterion itself; the
+theme opts standalone navigational links (headings, list rows, contact details, footer)
+into the floor with `.target-standalone`. The report is written to
+`docs/screenshots/a11y-report.json` and the script exits non-zero on any failure.
+
 ### How the hard cases were made observable
 
 Two of the brief's requirements are only *checkable* with deliberate setup, so the harness
@@ -152,7 +173,7 @@ identifier is neutral.
 
 ## 6. Regression list — real defects found and fixed during this work
 
-Each was reproduced in a browser or by a failing test before being fixed (18 items).
+Each was reproduced in a browser or by a failing test before being fixed (22 items).
 
 1. **CSS layers.** `styles/*.css` were unlayered and outranked Tailwind utilities, so
    `md:hidden` and `md:grid-cols-*` silently did nothing (the hamburger showed at 1440px).
@@ -200,7 +221,23 @@ Each was reproduced in a browser or by a failing test before being fixed (18 ite
     locale before `href` applied it again, so `/en` offered `/en/en` for "English" and pointed
     "فارسی" back at `/en`. The switch now takes the locale-neutral home path; both directions
     are covered by tests and by shots 01/03.
-18. **Dead end without JavaScript.** The entrance's menu is a client state change and the logo,
+18. **Absent landmarks and heading.** The home stage and both 404 routes had no `<main>`,
+    and the stage had no `h1` at all — a screen reader had no landmark to jump to and no
+    page heading. The stage is now the `main` landmark and the studio mark is its `h1`
+    (the entrance is already a distinct state, so a visually hidden duplicate heading
+    would be the same thing twice); both 404 routes got their own `main`.
+19. **Two sub-24px pointer targets.** Breadcrumb links measured 23×24 and a checkbox
+    label's own line box 13px tall, under WCAG 2.2 SC 2.5.8 (24×24, AA). Breadcrumb links
+    now carry a 24px floor on both axes and standalone links opt in via
+    `.target-standalone`; the checkbox label is a 24px-tall, pointer-cursor target.
+20. **404 pages titled with the studio name.** A page-level *static* `metadata` export
+    merged its `robots` but lost its `title` to the root layout, so every unknown URL was
+    titled «استودیوی نمونه» rather than «صفحه پیدا نشد — استودیوی نمونه». Both 404 routes
+    now use `generateMetadata`, like every other route here.
+21. **No skip link.** The shell exposed `<main id="content">` but nothing linked to it, so a
+    keyboard visitor had to walk the whole navbar. A focus-revealed skip link is now the
+    first tab stop on interior pages.
+22. **Dead end without JavaScript.** The entrance's menu is a client state change and the logo,
     rule and cue are server-rendered at `opacity: 0`, so a visitor with scripting off saw a
     blank stage and no way into the site. A `<noscript>` menu now lists the same CMS
     destinations and a no-script stylesheet reveals the stage — captured as shot 40.

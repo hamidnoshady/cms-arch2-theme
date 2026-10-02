@@ -92,7 +92,7 @@ export const AboutView = async ({ locale }: { locale: Locale }) => {
               </p>
             )}
             <p className="mt-10">
-              <a className="link-inline type-ui" href={href(THEME_ROUTES.contact, locale, ctx.site)}>
+              <a className="link-inline type-ui target-standalone" href={href(THEME_ROUTES.contact, locale, ctx.site)}>
                 {t.contact}
               </a>
             </p>
