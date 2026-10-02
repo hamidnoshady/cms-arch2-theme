@@ -181,6 +181,35 @@ export const getPostBySlug = async (
   return result?.docs[0] ?? null
 }
 
+/**
+ * Single post by id — what a **nav reference** carries (`relationTo: 'posts'`).
+ *
+ * A reference stores a document id, not a slug: passing that id to `getPostBySlug`
+ * silently drops the menu item whenever the two differ, which is almost always.
+ */
+export const getPostById = async (
+  id: string,
+  locale: Locale,
+  draft = false,
+): Promise<null | PostDoc> => {
+  const env = cmsEnv()
+  const result = await cmsFetchOptional<FindResult<PostDoc>>('/api/posts', {
+    draft,
+    locale,
+    params: listParams({
+      depth: 2,
+      fallbackLocale: false,
+      locale,
+      where: { and: [{ id: { equals: id } }, publishedFilter(draft)] },
+    }),
+    tags: [cmsTag(env, 'posts', locale)],
+  })
+  const post = result?.docs[0] ?? null
+  // Same rule as `getPageById`: a site key can read drafts, public rendering must not.
+  if (!draft && post?._status === 'draft') return null
+  return post
+}
+
 export const getPostsByIds = async (
   ids: string[],
   locale: Locale,

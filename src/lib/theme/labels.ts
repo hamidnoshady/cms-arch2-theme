@@ -29,6 +29,7 @@ type Dictionary = {
   leadStory: string
   loadMore: string
   menu: string
+  menuNoScript: string
   menuTitle: string
   next: string
   notFoundBody: string
@@ -79,6 +80,7 @@ const fa: Dictionary = {
   leadStory: 'یادداشت شاخص',
   loadMore: 'بیشتر',
   menu: 'فهرست',
+  menuNoScript: 'بدون جاوااسکریپت هم می‌توانید از این پیوندها استفاده کنید:',
   menuTitle: 'فهرست سایت',
   next: 'بعدی',
   notFoundBody: 'نشانی درخواستی در این سایت وجود ندارد.',
@@ -129,6 +131,7 @@ const en: Dictionary = {
   leadStory: 'Lead story',
   loadMore: 'Load more',
   menu: 'Menu',
+  menuNoScript: 'These links work without JavaScript as well:',
   menuTitle: 'Site menu',
   next: 'Next',
   notFoundBody: 'The requested address does not exist on this site.',

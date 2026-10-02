@@ -22,6 +22,8 @@ export const getChrome = async (
   ctx: SiteContext,
   currentPath: string,
   currentDoc?: { id: string; kind: 'page' | 'post'; pathForLocale: (locale: Locale) => string },
+  /** Locale-neutral query (e.g. `?q=…`) kept by a path-based language switch. */
+  switchQuery = '',
 ): Promise<Chrome> => {
   const [header, footer] = await Promise.all([
     getHeader(ctx.locale, ctx.draft),
@@ -39,6 +41,6 @@ export const getChrome = async (
     logo: brandLogo(ctx),
     switchTargets: currentDoc
       ? await switchTargets(ctx, currentDoc)
-      : switchTargetsForPath(ctx, () => currentPath),
+      : switchTargetsForPath(ctx, () => currentPath, switchQuery),
   }
 }

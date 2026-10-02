@@ -70,9 +70,13 @@ export const switchTargets = async (
 export const switchTargetsForPath = (
   ctx: SiteContext,
   pathForLocale: (locale: Locale) => string,
+  query = '',
 ): SwitchTarget[] =>
   ctx.site.availableLocales.map((locale) => ({
-    href: href(pathForLocale(locale), locale, ctx.site),
+    // A query is carried over only when it is locale-neutral — the search term is free
+    // text in whatever the visitor typed, while a category slug belongs to one locale
+    // and pointing another locale at it would filter by a slug that does not exist there.
+    href: href(`${pathForLocale(locale)}${query}`, locale, ctx.site),
     label: localeLabel(locale),
     locale,
   }))

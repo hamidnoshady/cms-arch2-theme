@@ -53,8 +53,13 @@ export const BlogIndexView = async ({ locale, page }: { locale: Locale; page: nu
   const route = resolveThemeRoute(['blog'], ctx.site)
   const crumbs = breadcrumbsFor(route, ctx.site)
 
-  const hrefFor = async (post: (typeof archive.docs)[number]): Promise<string> =>
-    href(await postHref(post, ctx), locale, ctx.site)
+  // One href map for the whole page: a post's URL depends on the section it belongs to,
+  // so resolving it per list item with a second rule can only ever disagree with itself
+  // (the lead story and the rows below it are the same archive).
+  const hrefById = new Map(
+    await Promise.all(archive.docs.map(async (post) => [post.id, href(await postHref(post, ctx), locale, ctx.site)] as const)),
+  )
+  const hrefFor = (post: { id: string }): string => hrefById.get(post.id) ?? THEME_ROUTES.blog
 
   return (
     <InteriorPage context={ctx} crumbs={crumbs} currentPath={THEME_ROUTES.blog} label={t.breadcrumb} locale={locale}>
@@ -86,7 +91,7 @@ export const BlogIndexView = async ({ locale, page }: { locale: Locale; page: nu
               <LeadStory
                 category={null}
                 context={ctx}
-                href={await hrefFor(lead)}
+                href={hrefFor(lead)}
                 minutes={readingMinutes(lexicalText(lead.content as never))}
                 post={lead}
               />
@@ -96,7 +101,7 @@ export const BlogIndexView = async ({ locale, page }: { locale: Locale; page: nu
               <h2 className="type-label mb-2">{t.latestNotes}</h2>
               <ul>
                 {latest.map((post) => (
-                  <LatestNote context={ctx} href={articleHref(ctx, post)} key={post.id} post={post} />
+                  <LatestNote context={ctx} href={hrefFor(post)} key={post.id} post={post} />
                 ))}
               </ul>
             </div>
@@ -110,7 +115,7 @@ export const BlogIndexView = async ({ locale, page }: { locale: Locale; page: nu
                   <ArticleRow
                     category={null}
                     context={ctx}
-                    href={articleHref(ctx, post)}
+                    href={hrefFor(post)}
                     key={post.id}
                     minutes={readingMinutes(lexicalText(post.content as never))}
                     post={post}
@@ -131,9 +136,3 @@ export const BlogIndexView = async ({ locale, page }: { locale: Locale; page: nu
     </InteriorPage>
   )
 }
-
-/** Synchronous link for list items: the blog route is canonical for plain posts. */
-const articleHref = (
-  ctx: { locale: Locale; site: { defaultLocale: Locale } },
-  post: { slug: string },
-): string => href(`/blog/${encodeURIComponent(post.slug)}`, ctx.locale, ctx.site)

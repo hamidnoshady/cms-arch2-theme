@@ -1,7 +1,7 @@
 # QA and verification report
 
 What was actually run, against what, and what the result was. Every screenshot referenced
-here is a real browser capture (`docs/screenshots/`, 39 PNGs at 2× device scale) produced by
+here is a real browser capture (`docs/screenshots/`, 40 PNGs at 2× device scale) produced by
 `scripts/screenshots.mjs` against a **production build**. Pending or aspirational checks are
 stated as such — nothing in this file is a plan.
 
@@ -38,9 +38,9 @@ the resulting screenshots look fine while measuring nothing.
 | Vendored runtime builds | `npm run vendor:build` | passes (8 modules emitted) |
 | TypeScript | `npm run typecheck` | clean, `strict` + `noUncheckedIndexedAccess` + `verbatimModuleSyntax` |
 | ESLint | `npm run lint` | 0 errors, 0 warnings |
-| Unit/integration tests | `npm test` | **8 files, 76 tests, all passing** |
+| Unit/integration tests | `npm test` | **9 files, 87 tests, all passing** |
 | Production build | `npm run build` | Next 16.3.8, compiles, all routes emitted |
-| Browser evidence | `node scripts/screenshots.mjs` | **39 shots, 0 failures**, no page errors, no horizontal overflow |
+| Browser evidence | `node scripts/screenshots.mjs` | **40 shots, 0 failures**, no page errors, no horizontal overflow |
 | Manifest | `tests/manifest.test.ts` + the CMS's own parser | accepted (§5) |
 
 `npm run verify` chains typecheck → lint → test → build. Lint is *inside* verify (it is not
@@ -56,13 +56,14 @@ excluded), and any of the four failing fails the chain.
 | `tests/media.test.ts` | size URLs, `srcSet`, focal points, aspect ratios, origin allowlist |
 | `tests/security.test.ts` | tenant resolution, preview gating, signature checks, draft exclusion |
 | `tests/fixtures.test.ts` | the fixture encoder's query semantics (`exists=false`, `like`, paging) |
+| `tests/content.test.ts` | nav references resolve by **id**; reads are single-locale with `fallbackLocale=false`; the credential travels in a header; the language switch carries a search term |
 | `tests/manifest.test.ts` | manifest ↔ code agreement, neutral identifiers, no unclaimed capability |
 | `tests/components.test.tsx` | server-rendered component output (marks, rules, skeletons) |
 
 ## 3. Browser evidence
 
 `node scripts/screenshots.mjs --base http://127.0.0.1:3200 --scale 2` →
-`docs/screenshots/report.json`: 39 entries, all `status=200`, `overflowOk=true`, no
+`docs/screenshots/report.json`: 40 entries, all `status=200`, `overflowOk=true`, no
 `consoleErrors`, every `expect` assertion satisfied.
 
 | # | Shot | What it proves |
@@ -95,6 +96,7 @@ excluded), and any of the four failing fails the chain.
 | 31–32 | `zoom200-{home,projects}-1440` | 200% zoom: same layout, no clipping, no overflow |
 | 33 | `reduced-motion-home-1440` | `prefers-reduced-motion` → final state immediately, no entrance animation |
 | 34–38 | interior pages at 390 | education, article, about, contact, and the English mirror |
+| 40 | `no-js-home-1440` | JavaScript disabled: the entrance's `<noscript>` menu offers every CMS destination, and the mark/rule/cue are revealed by the no-script stylesheet instead of staying at `opacity:0` |
 
 ### How the hard cases were made observable
 
@@ -150,7 +152,7 @@ identifier is neutral.
 
 ## 6. Regression list — real defects found and fixed during this work
 
-Each was reproduced in a browser or by a failing test before being fixed.
+Each was reproduced in a browser or by a failing test before being fixed (17 items).
 
 1. **CSS layers.** `styles/*.css` were unlayered and outranked Tailwind utilities, so
    `md:hidden` and `md:grid-cols-*` silently did nothing (the hamburger showed at 1440px).
@@ -183,6 +185,21 @@ Each was reproduced in a browser or by a failing test before being fixed.
     now get `tel`, `inputMode="tel"` and LTR isolation inside the RTL form.
 13. **Test-only stubs in production code.** `previewToken` and `fixturesEnabled` were imported
     but unused (lint warnings), caught by moving lint inside `verify`.
+14. **Nav reference read by slug.** A `posts` menu reference stores a document *id*; passing it
+    to `getPostBySlug` silently dropped the menu item. Added `getPostById` and a fixture menu
+    entry whose id and slug differ, so the rule is pinned by a test (`tests/content.test.ts`)
+    instead of by luck.
+15. **Second, disagreeing link rule on the blog index.** The lead story and the rows below it
+    resolved the same archive with two different rules, so a post could link to `/blog/<slug>`
+    in one place and `/projects/<slug>` in another. One section-aware href map now serves the
+    whole page.
+16. **Language switch dropped the search term.** `/search?q=…` switched language to a bare
+    `/en/search`. Locale-neutral queries are carried over; category slugs deliberately are not,
+    because they belong to one locale.
+17. **Dead end without JavaScript.** The entrance's menu is a client state change and the logo,
+    rule and cue are server-rendered at `opacity: 0`, so a visitor with scripting off saw a
+    blank stage and no way into the site. A `<noscript>` menu now lists the same CMS
+    destinations and a no-script stylesheet reveals the stage — captured as shot 40.
 
 ## 7. What is *not* verified
 

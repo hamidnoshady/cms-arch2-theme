@@ -38,7 +38,15 @@ export const SearchView = async ({ locale, query }: { locale: Locale; query: str
   const crumbs = breadcrumbsFor(route, ctx.site)
 
   return (
-    <InteriorPage context={ctx} crumbs={crumbs} currentPath={THEME_ROUTES.search} label={t.breadcrumb} locale={locale}>
+    <InteriorPage
+      context={ctx}
+      crumbs={crumbs}
+      currentPath={THEME_ROUTES.search}
+      label={t.breadcrumb}
+      locale={locale}
+      // The term is what the visitor typed, so it survives a language switch.
+      switchQuery={query ? `?q=${encodeURIComponent(query)}` : ''}
+    >
       <SectionHeader title={t.search} />
       <ContentContainer>
         <form action={THEME_ROUTES.search} className="mb-10 flex max-w-[36rem] items-end gap-3" method="get" role="search">

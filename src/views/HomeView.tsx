@@ -54,6 +54,7 @@ export const HomeView = async ({ locale }: { locale: Locale }) => {
         ctx.site.media.origin,
       )}
       menuLabel={t.menuTitle}
+      menuNoScript={t.menuNoScript}
       name={branding?.displayName ?? ctx.site.name}
       scrollCue={t.scrollCue}
       switchTargets={switchTargetsForPath(ctx, () => href(THEME_ROUTES.home, locale, ctx.site))}

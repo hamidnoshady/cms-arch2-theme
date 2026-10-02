@@ -39,6 +39,7 @@ export type HomeStageProps = {
   locale: 'en' | 'fa'
   logoUrl: null | string
   menuLabel: string
+  menuNoScript: string
   name: string
   scrollCue: string
   switchTargets: SwitchTarget[]
@@ -69,6 +70,7 @@ export const HomeStage = ({
   introEnabled,
   logoUrl,
   menuLabel,
+  menuNoScript,
   name,
   scrollCue,
   switchTargets,
@@ -167,13 +169,13 @@ export const HomeStage = ({
                 ? { opacity: 1, scale: reduced ? 1 : 0.62, y: reduced ? 0 : -8 }
                 : { opacity: 1, scale: 1, y: 0 }
             }
-            className="flex items-center justify-center"
+            className="stage-intro-fx flex items-center justify-center"
             initial={false}
             transition={{ duration: fast, ease: [0.22, 0.61, 0.36, 1] }}
           >
             <motion.div
               animate={{ opacity: 1 }}
-              className="flex max-w-[26rem] items-center justify-center px-6"
+              className="stage-intro-fx flex max-w-[26rem] items-center justify-center px-6"
               initial={{ opacity: 0 }}
               transition={{ delay: reduced ? 0 : duration, duration: reduced ? 0 : 0.6 }}
             >
@@ -194,7 +196,7 @@ export const HomeStage = ({
           <motion.svg
             animate={{ opacity: 1 }}
             aria-hidden="true"
-            className="mx-auto mt-8 block w-[min(22rem,70%)]"
+            className="stage-intro-fx mx-auto mt-8 block w-[min(22rem,70%)]"
             height="1"
             initial={{ opacity: 0 }}
             preserveAspectRatio="none"
@@ -223,11 +225,37 @@ export const HomeStage = ({
             <motion.span
               animate={reduced ? { opacity: 1 } : { opacity: [0.25, 1, 0.25] }}
               aria-hidden="true"
-              className="block h-8 w-px bg-line-structural"
+              className="stage-intro-fx block h-8 w-px bg-line-structural"
               transition={reduced ? { duration: 0 } : { duration: 2.4, ease: 'easeInOut', repeat: Infinity }}
             />
           </div>
         ) : null}
+
+        {/*
+          Progressive enhancement: the entrance is a JS state change, so without JS the
+          page would offer nothing but the mark. A `<noscript>` copy of the same CMS
+          links means the home page is still a way into the site — browsers with
+          scripting on never render it, and it is not a second menu in the a11y tree.
+        */}
+        <noscript>
+          {/* Framer Motion renders the entrance's *initial* state on the server, so with
+              scripting off the logo, the drawn rule and the scroll cue would stay at
+              `opacity: 0` forever. Browsers with scripting on never apply this block. */}
+          <style>{'.stage-intro-fx{opacity:1 !important;transform:none !important}'}</style>
+          <nav className="container-content pb-16" aria-label={menuLabel}>
+            <p className="type-caption mb-3">{menuNoScript}</p>
+            <Rule className="mb-2" />
+            <ul>
+              {links.map((link) => (
+                <li className="relative border-b border-line-structural" key={link.href}>
+                  <a className="menu-row flex items-baseline justify-between gap-6 py-5 ps-6" href={link.href}>
+                    <span className="menu-row__label type-heading">{link.label}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </noscript>
       </div>
 
       {menuOpen ? (

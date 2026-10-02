@@ -60,7 +60,7 @@ npm run verify        # vendor:build → typecheck → lint → test → build
 ```
 
 `verify` includes lint — it is not skipped. Current state: typecheck clean, 0 lint errors,
-76 tests passing, production build succeeding. See `docs/QA.md` §2.
+87 tests passing, production build succeeding. See `docs/QA.md` §2.
 
 ## Configuration
 
@@ -186,6 +186,6 @@ vendor/           vendored @eshobe/site-runtime (see PROVENANCE.md)
   (`ok`, `empty`, `holding`, `nologo`, `longlabels`) and transport switches (`slow`, `fail`).
 - `qa-servers.sh` — brings up the whole scenario topology (ports 3300–3800) with a port
   preflight, so a half-bound run cannot quietly measure the wrong thing.
-- `screenshots.mjs` — the browser harness: 39 named shots, overflow and console-error
+- `screenshots.mjs` — the browser harness: 40 named shots, overflow and console-error
   assertions, per-shot expectations, network throttling for skeleton captures.
 - `make-qa-media.sh` — regenerates the synthetic colour placeholders in `public/qa/media/`.

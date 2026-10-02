@@ -96,6 +96,18 @@ const shots = [
   { name: '36-about-390', path: '/about', viewport: phone, fullPage: true },
   { name: '37-contact-390', path: '/contact', viewport: phone, fullPage: true },
   { name: '38-en-education-390', path: '/en/education', viewport: phone, fullPage: true },
+  // Progressive enhancement: with scripting off the entrance cannot run, so the home
+  // page must still offer the CMS menu. Chromium renders `<noscript>` children exactly
+  // when scripting is disabled, which makes this a real check of the fallback.
+  {
+    name: '40-no-js-home-1440',
+    javaScriptEnabled: false,
+    path: '/',
+    viewport: desktop,
+    waitMs: 600,
+    fullPage: true,
+    expect: { selector: 'noscript a[href="/projects"]', text: 'پروژه‌ها' },
+  },
 ]
 
 /** True when something accepts a TCP connection at `origin` (a slow server still does). */
@@ -151,6 +163,9 @@ const main = async () => {
   for (const shot of shots) {
     if (only && !shot.name.includes(only)) continue
     const page = await browser.newPage()
+    // Must be set before the first navigation: the parser decides whether `<noscript>`
+    // content is rendered, so toggling it later would not reproduce a no-JS visitor.
+    if (shot.javaScriptEnabled === false) await page.setJavaScriptEnabled(false)
     await page.setViewport(shot.viewport)
     if (shot.emulate?.reducedMotion) {
       await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: shot.emulate.reducedMotion }])

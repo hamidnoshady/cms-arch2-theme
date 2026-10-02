@@ -4,7 +4,7 @@ import { pagePath } from '@/lib/runtime'
 
 import type { SiteContext } from '@/lib/cms/context'
 import { getSectionRef } from '@/lib/cms/content'
-import { getPageById, getPostBySlug } from '@/lib/cms/endpoints'
+import { getPageById, getPostById } from '@/lib/cms/endpoints'
 import type { CmsLink, NavItem, PageDoc, PostDoc } from '@/lib/cms/types'
 import { mediaUrl } from '@/lib/utils/media'
 
@@ -48,24 +48,22 @@ export const linkHref = async (link: CmsLink | null | undefined, ctx: SiteContex
   if (!id) return null
 
   if (reference.relationTo === 'pages') {
-    const bindings = ctx.site.themeRuntime?.bindings ?? {}
     const home = getSectionRef('home', ctx)
     const about = getSectionRef('about', ctx)
     const contact = getSectionRef('contact', ctx)
     if (home.by === 'binding' && home.id === id) return href(THEME_ROUTES.home, ctx.locale, ctx.site)
     if (about.by === 'binding' && about.id === id) return href(THEME_ROUTES.about, ctx.locale, ctx.site)
     if (contact.by === 'binding' && contact.id === id) return href(THEME_ROUTES.contact, ctx.locale, ctx.site)
-    void bindings
 
     const page: null | PageDoc = await getPageById(id, ctx.locale, ctx.draft)
     if (!page) return null
     return href(pagePath(page.slug), ctx.locale, ctx.site)
   }
 
-  const post: null | PostDoc = await getPostBySlug(id, ctx.locale, ctx.draft)
+  // A `posts` reference stores an **id**; the archive URL depends on the section the
+  // post belongs to, which is only knowable from the resolved document.
+  const post: null | PostDoc = await getPostById(id, ctx.locale, ctx.draft)
   if (!post) return null
-  // A referenced post may itself be a project or an entry; the archive routes are
-  // resolved from pathname-shaped data only when the post is already known.
   const { postHref } = await import('@/lib/cms/content')
   return href(await postHref(post, ctx), ctx.locale, ctx.site)
 }

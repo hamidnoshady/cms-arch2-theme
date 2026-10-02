@@ -20,6 +20,7 @@ export const InteriorPage = async ({
   label,
   locale,
   switchDoc,
+  switchQuery,
 }: {
   children: ReactNode
   context: SiteContext
@@ -28,8 +29,10 @@ export const InteriorPage = async ({
   label: string
   locale: Locale
   switchDoc?: { id: string; kind: 'page' | 'post'; pathForLocale: (locale: Locale) => string }
+  /** Locale-neutral query carried by the language switch (`/search?q=…`). */
+  switchQuery?: string
 }) => {
-  const chrome = await getChrome(context, currentPath, switchDoc)
+  const chrome = await getChrome(context, currentPath, switchDoc, switchQuery)
 
   return (
     <InteriorShell
