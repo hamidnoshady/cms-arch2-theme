@@ -38,7 +38,7 @@ the resulting screenshots look fine while measuring nothing.
 | Vendored runtime builds | `npm run vendor:build` | passes (8 modules emitted) |
 | TypeScript | `npm run typecheck` | clean, `strict` + `noUncheckedIndexedAccess` + `verbatimModuleSyntax` |
 | ESLint | `npm run lint` | 0 errors, 0 warnings |
-| Unit/integration tests | `npm test` | **9 files, 87 tests, all passing** |
+| Unit/integration tests | `npm test` | **9 files, 89 tests, all passing** |
 | Production build | `npm run build` | Next 16.3.8, compiles, all routes emitted |
 | Browser evidence | `node scripts/screenshots.mjs` | **40 shots, 0 failures**, no page errors, no horizontal overflow |
 | Manifest | `tests/manifest.test.ts` + the CMS's own parser | accepted (§5) |
@@ -152,7 +152,7 @@ identifier is neutral.
 
 ## 6. Regression list — real defects found and fixed during this work
 
-Each was reproduced in a browser or by a failing test before being fixed (17 items).
+Each was reproduced in a browser or by a failing test before being fixed (18 items).
 
 1. **CSS layers.** `styles/*.css` were unlayered and outranked Tailwind utilities, so
    `md:hidden` and `md:grid-cols-*` silently did nothing (the hamburger showed at 1440px).
@@ -196,7 +196,11 @@ Each was reproduced in a browser or by a failing test before being fixed (17 ite
 16. **Language switch dropped the search term.** `/search?q=…` switched language to a bare
     `/en/search`. Locale-neutral queries are carried over; category slugs deliberately are not,
     because they belong to one locale.
-17. **Dead end without JavaScript.** The entrance's menu is a client state change and the logo,
+17. **Double locale prefix on the English home.** The home language switch pre-applied the
+    locale before `href` applied it again, so `/en` offered `/en/en` for "English" and pointed
+    "فارسی" back at `/en`. The switch now takes the locale-neutral home path; both directions
+    are covered by tests and by shots 01/03.
+18. **Dead end without JavaScript.** The entrance's menu is a client state change and the logo,
     rule and cue are server-rendered at `opacity: 0`, so a visitor with scripting off saw a
     blank stage and no way into the site. A `<noscript>` menu now lists the same CMS
     destinations and a no-script stylesheet reveals the stage — captured as shot 40.

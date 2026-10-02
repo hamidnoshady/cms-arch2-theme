@@ -4,7 +4,6 @@ import { HomeStage } from '@/components/home/HomeStage'
 import { StateView } from '@/views/StateView'
 import { getHeader } from '@/lib/cms/endpoints'
 import { loadPageContext } from '@/lib/cms/pageContext'
-import { href } from '@/lib/routing/locale'
 import { navLinks } from '@/lib/routing/nav'
 import { THEME_ROUTES } from '@/lib/routing/paths'
 import { metadataFor } from '@/lib/seo/metadata'
@@ -41,6 +40,8 @@ export const HomeView = async ({ locale }: { locale: Locale }) => {
   const branding = ctx.site.branding
   const t = dictionary(locale)
 
+  // The switch is path-based: the home path is locale-neutral, so `href` applies the
+  // prefix exactly once. Pre-prefixing it here produced `/en/en` on the English home.
   return (
     <HomeStage
       dir={ctx.dir}
@@ -57,7 +58,7 @@ export const HomeView = async ({ locale }: { locale: Locale }) => {
       menuNoScript={t.menuNoScript}
       name={branding?.displayName ?? ctx.site.name}
       scrollCue={t.scrollCue}
-      switchTargets={switchTargetsForPath(ctx, () => href(THEME_ROUTES.home, locale, ctx.site))}
+      switchTargets={switchTargetsForPath(ctx, () => THEME_ROUTES.home)}
     />
   )
 }

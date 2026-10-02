@@ -60,7 +60,7 @@ npm run verify        # vendor:build → typecheck → lint → test → build
 ```
 
 `verify` includes lint — it is not skipped. Current state: typecheck clean, 0 lint errors,
-87 tests passing, production build succeeding. See `docs/QA.md` §2.
+89 tests passing, production build succeeding. See `docs/QA.md` §2.
 
 ## Configuration
 

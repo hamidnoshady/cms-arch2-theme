@@ -172,6 +172,23 @@ describe('language switch targets', () => {
     expect(english?.href).toBe('/en/search?q=%D9%86%D9%88%D8%B1')
   })
 
+  it('builds the home switch from a locale-neutral path, never a prefixed one', async () => {
+    // The bug this guards: passing `href('/', locale, site)` inside the closure applied
+    // the prefix twice, so the English home offered `/en/en` and pointed "فارسی" at `/en`.
+    const { switchTargetsForPath } = await import('@/lib/seo/translations')
+    for (const from of ['fa', 'en'] as Locale[]) {
+      const targets = switchTargetsForPath(ctx(from), () => '/')
+      expect(targets.find((target) => target.locale === 'fa')?.href).toBe('/')
+      expect(targets.find((target) => target.locale === 'en')?.href).toBe('/en')
+    }
+  })
+
+  it('switches an interior path in both directions', async () => {
+    const { switchTargetsForPath } = await import('@/lib/seo/translations')
+    const targets = switchTargetsForPath(ctx('en'), () => '/projects')
+    expect(targets.map((target) => target.href).sort()).toEqual(['/en/projects', '/projects'])
+  })
+
   it('keeps the default locale unprefixed and adds no empty query', async () => {
     const { switchTargetsForPath } = await import('@/lib/seo/translations')
     const targets = switchTargetsForPath(ctx('en'), () => '/projects')
