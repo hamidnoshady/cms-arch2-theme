@@ -1,1 +1,196 @@
-# cms-arch2-theme
+# Architecture portfolio theme — Eshobe CMS theme (`contractVersion = 1`)
+
+A complete, bilingual (Persian-first RTL / English LTR) portfolio theme for an architecture
+studio, built against the Eshobe CMS theme contract. White surfaces, black type and
+linework, photography in colour, square corners, restrained motion, and a structural line
+system that carries the layout instead of boxes.
+
+- The design brief this theme implements is transcribed in [`docs/SPEC.md`](./docs/SPEC.md).
+- Everything not verified, and every deliberate deviation, is in
+  [`docs/LIMITATIONS.md`](./docs/LIMITATIONS.md).
+- What was tested, how to reproduce it, and the browser evidence is in
+  [`docs/QA.md`](./docs/QA.md).
+
+**Nothing here is deployed.** No domain was changed and no site was published; the manifest
+deliberately declares no deployment strategy (see §Manifest).
+
+---
+
+## Naming
+
+`key`, `name` and `nameFa` in `eshobe.theme.json` are **neutral placeholders**
+(`arch2-neutral`). The theme carries no studio identity: the name, logo, contact details,
+people and projects all come from the CMS at runtime. Replace the three identifiers when the
+product name is chosen — `tests/manifest.test.ts` asserts the key is neutral only to keep an
+accidental brand name from shipping.
+
+## Requirements
+
+- Node 22+ (developed on 22.22)
+- npm (one package manager, one lockfile — `package-lock.json` is committed)
+- A reachable Eshobe CMS instance for anything other than fixture/QA work
+
+`@eshobe/site-runtime` is **not published to npm**; it is vendored under
+`vendor/site-runtime/` and compiled locally by `npm run vendor:build`, which `typecheck`,
+`lint`, `test` and `build` all run first. See `vendor/site-runtime/PROVENANCE.md`.
+
+## Install and run
+
+```bash
+npm ci
+npm run dev            # http://localhost:3000
+```
+
+For a production build:
+
+```bash
+npm run build
+npm run start:standalone     # prepare:standalone + node .next/standalone/server.js
+```
+
+`next start` alone is **not** enough with `output: 'standalone'`: `public/` and
+`.next/static` are not copied into the standalone directory, so the page loads without CSS
+or hydration. `npm run prepare:standalone` copies both, and `start:standalone` runs it first.
+This is why the manifest's `startCommand` is `npm run start:standalone`.
+
+### Verification
+
+```bash
+npm run verify        # vendor:build → typecheck → lint → test → build
+```
+
+`verify` includes lint — it is not skipped. Current state: typecheck clean, 0 lint errors,
+105 tests passing, production build succeeding. See `docs/QA.md` §2.
+
+## Configuration
+
+Everything the theme reads is injected by the platform at runtime. **Nothing is baked into
+the bundle**, and every secret stays server-side: no key, token or CMS URL is available to
+client code (`src/lib/cms/client.ts` is the only place that reads them, and it is
+`server-only`).
+
+| Variable | Purpose |
+| --- | --- |
+| `ESHOBE_CMS_URL` (or `ESHOBE_API_URL`) | CMS base URL. Runtime, server-only. |
+| `ESHOBE_API_KEY` (or `ESHOBE_SITE_API_KEY`) | Site credential. Server-only; never logged, never bundled. |
+| `ESHOBE_PUBLIC_ORIGIN` | Where this deployment is reachable — used for `metadataBase` and the preview host. |
+| `ESHOBE_SITE_DOMAIN` | The customer's canonical domain, for canonical URLs and the sitemap. |
+| `ESHOBE_DEFAULT_LOCALE` / `ESHOBE_LOCALES` | Served locales. Persian is the default and unprefixed. |
+| `ESHOBE_REVALIDATE_SECRET` | HMAC secret for `POST /api/revalidate` (raw-body signature). |
+| `ESHOBE_PREVIEW_SECRET` | Enables preview mode. Unset ⇒ preview is off. |
+| `ESHOBE_ALLOW_HOST_TENANT` | `true` resolves the tenant from the `Host` header via a raw HTTP request. Never combined with a site key. |
+| `ESHOBE_DEV_FIXTURES` | `1` serves synthetic fixture content — **development only** (`NODE_ENV !== 'production'`). |
+
+The CMS is resolved per request from the trusted `Host` header or the server-side site
+credential — never from a visitor query parameter or body. Unknown hosts fail closed.
+
+## Fonts
+
+- **Persian:** Vazirmatn Variable (OFL) ships in `public/fonts/`. Shazde 100–900 is the
+  designed family and is **not distributed here** (licensed). Drop the licensed
+  `Shazde-*.woff2` files into `public/fonts/shazde/` and the theme switches automatically;
+  missing weights are reported at boot and fall back to the nearest licensed weight, never a
+  synthesised one. See `public/fonts/shazde/README.md`.
+- **English:** Inter Variable (OFL).
+- `npm run fonts` re-fetches the open fonts (needs network access to the font CDN).
+
+## CMS attachment
+
+1. **Register the theme** in the CMS from this repository. The CMS parses
+   `eshobe.theme.json` with `parseThemeManifest` and rejects anything it does not recognise,
+   so only documented keys are present.
+2. **Bind the content slots.** The theme declares seven (`home`, `about`, `contact`,
+   `projectsCategory`, `educationCategory`, `blogCategory`, `contactForm`). A bound
+   document wins; when a slot is unbound the theme falls back to the documented slug hint
+   (`about`, `projects`, `education`, …) *only* as a first-run convenience. It never falls
+   back to an unrelated document that happens to share a slug, and a binding that is missing
+   or untranslated renders an empty state rather than guessing.
+3. **Confirm the capabilities** you actually want: `blog`, `contactForm`, `education`,
+   `projects`, `search`. The theme claims no others (no store, no payments).
+4. **Media** is read from `site.media.origin`; URLs are validated against it before render.
+
+### Content conventions
+
+Projects, education entries and blog posts are all **categorised posts**, per the contract —
+there are no invented `/api/projects` or `/api/team` endpoints. Titles, facts, dates,
+categories and contact details come from the CMS; the theme fabricates nothing, including
+location, area, year or awards. A `contact` block renders only the fields the CMS has
+(`address`, `email`, `phones[]`, `hours`, `mapUrl`) and says so in the console when they are
+all empty.
+
+## Preview and revalidation
+
+- `POST /api/preview` sets the preview cookie after verifying a signed token. Preview
+  bypasses shared caches, is `noindex`, and may show drafts.
+- `POST /api/revalidate` verifies an HMAC over the **raw request body** with a bounded TTL
+  fallback, then revalidates the affected cache tags.
+- Public rendering never includes drafts. Caches are partitioned by tenant, locale, query,
+  and public-vs-preview.
+- `GET /api/health` reports ready only when the CMS's `contractVersion` matches this theme's.
+
+## Release and rollback
+
+The manifest currently declares **no** `deployment` block, because this theme has never been
+deployed: claiming `registry_image` with an image repository that does not exist would be a
+false claim, and the parser requires one for that strategy. To release:
+
+1. Build and publish an image for this repository, then add to `eshobe.theme.json`:
+   ```json
+   "deployment": {
+     "strategy": "registry_image",
+     "registryProvider": "ghcr",
+     "registryVisibility": "public",
+     "registryImageRepository": "ghcr.io/<owner>/<image>"
+   }
+   ```
+   (or switch to `strategy: "coolify_build"` and let the platform build the repo).
+2. Tag the release (`git tag v0.1.0 && git push --tags`) and set `previewUrl` if you want a
+   preview link surfaced in the CMS.
+3. **Roll back by deploying the previous tag** — the theme is versioned by commit and tag,
+   and the CMS records which ref a site was built from. Never roll back by editing a tag in
+   place.
+
+## Security notes
+
+- Site credentials are server-only and runtime-only; rotating one is a CMS operation and
+  needs no rebuild.
+- A public form submission is forwarded **without the site key** and without cookies, so a
+  visitor's enquiry can never borrow the theme's privileges.
+- Unknown hosts fail closed; a `suspended` or `archived` site renders a `noindex` holding
+  page with no portfolio content.
+- Diverting scheduled jobs: if you expose `/api/revalidate`, give it the CMS's secret — the
+  route answers `503` while `ESHOBE_REVALIDATE_SECRET` is unset.
+
+## Project layout
+
+```
+src/
+  app/            routes: Persian tree, full /en mirror, api/*, robots, sitemap
+  components/     ui · design · layout · home · projects · education · blog · media · forms · blocks · states
+  lib/            cms · routing · theme · seo · utils · runtime (the only importer of site-runtime)
+  styles/         tokens · base · typography · lines · structure · components (one entry: app/globals.css)
+  views/          one view per route, plus its metadata builder
+  proxy.ts        real status codes (404 / 307), locale enforcement, tenant host checks
+scripts/          build + QA tooling (mock CMS, scenario servers, screenshots)
+tests/            vitest suites
+docs/             SPEC.md · QA.md · LIMITATIONS.md · screenshots/
+vendor/           vendored @eshobe/site-runtime (see PROVENANCE.md)
+```
+
+## QA tooling
+
+`scripts/` contains tools that are **never imported by the theme at runtime**:
+
+- `mock-cms.mjs` — serves the documented REST shapes from the same fixture encoder the
+  development provider uses, with composable modes
+  (`ok`, `empty`, `holding`, `nologo`, `longlabels`) and transport switches (`slow`, `fail`).
+- `qa-servers.sh` — brings up the whole scenario topology (ports 3300–3800) with a port
+  preflight, so a half-bound run cannot quietly measure the wrong thing.
+- `npm run audit` — the two browser audits below, back to back
+- `a11y-audit.mjs` — `npm run a11y`: structural checks over 17 routes (one `h1`, a `<main>`,
+  heading order, image `alt`, duplicate ids, WCAG 2.2 target sizes, text contrast)
+- `interaction-audit.mjs` — keyboard/pointer behaviour: entrance, drawer focus trap and
+  Escape, scroll-lock cleanup, single-submit, value preservation on failure
+- `screenshots.mjs` — the browser harness: 40 named shots, overflow and console-error
+  assertions, per-shot expectations, network throttling for skeleton captures.
+- `make-qa-media.sh` — regenerates the synthetic colour placeholders in `public/qa/media/`.

@@ -1,0 +1,128 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { POST } from '@/app/api/form-submissions/route'
+
+/**
+ * The public form endpoint — the theme's one write path into the CMS.
+ *
+ * It is a *proxy*, and the properties worth pinning are the ones that make that safe:
+ * a visitor's enquiry is filed without any privileged credential, the tenant travels as
+ * the visitor's own host, the payload is bounded, and the CMS's answer (status included)
+ * is what the browser sees — the theme never invents a success.
+ */
+
+const ENV = { ...process.env }
+const CMS = 'https://cms.example.test'
+
+type Relay = { body?: unknown; headers: Record<string, string>; method?: string; url: string }
+
+const captured: Relay[] = []
+
+const stubFetch = (status = 201, body = '{"message":"submitted"}') => {
+  captured.length = 0
+  vi.stubGlobal('fetch', async (url: string | URL, init?: RequestInit) => {
+    captured.push({
+      body: init?.body,
+      headers: (init?.headers ?? {}) as Record<string, string>,
+      method: init?.method,
+      url: String(url),
+    })
+    return new Response(body, { headers: { 'content-type': 'application/json' }, status })
+  })
+}
+
+beforeEach(() => {
+  process.env = { ...ENV, ESHOBE_API_KEY: 'site-key-for-test', ESHOBE_CMS_URL: CMS }
+  delete process.env.ESHOBE_DEV_FIXTURES
+})
+
+afterEach(() => {
+  process.env = { ...ENV }
+  vi.unstubAllGlobals()
+})
+
+const submit = (body: unknown, headers: Record<string, string> = {}) =>
+  new Request('https://studio.example.test/api/form-submissions', {
+    body: typeof body === 'string' ? body : JSON.stringify(body),
+    headers: { 'content-type': 'application/json', host: 'studio.example.test', ...headers },
+    method: 'POST',
+  })
+
+const payload = { form: 'form-contact', submissionData: [{ field: 'name', value: 'نمونه' }] }
+
+describe('form submissions proxy', () => {
+  it('forwards to the documented endpoint and passes the CMS answer through', async () => {
+    stubFetch(201)
+    const response = await POST(submit(payload))
+
+    expect(captured).toHaveLength(1)
+    expect(captured[0]!.url).toBe(`${CMS}/api/form-submissions`)
+    expect(captured[0]!.method).toBe('POST')
+    expect(response.status).toBe(201)
+    await expect(response.json()).resolves.toEqual({ message: 'submitted' })
+  })
+
+  it('never attaches the site credential, a cookie or a client authorization header', async () => {
+    stubFetch()
+    await POST(
+      submit(payload, {
+        authorization: 'Bearer visitor-supplied',
+        cookie: 'eshobe_preview=forged',
+      }),
+    )
+
+    const headers = captured[0]!.headers
+    const serialised = JSON.stringify(headers).toLowerCase()
+    expect(serialised).not.toContain('site-key-for-test')
+    expect(serialised).not.toContain('bearer')
+    expect(serialised).not.toContain('cookie')
+    expect(Object.keys(headers).map((key) => key.toLowerCase())).not.toContain('authorization')
+  })
+
+  it('tells the CMS which host the visitor asked for', async () => {
+    stubFetch()
+    await POST(submit(payload))
+
+    const headers = captured[0]!.headers
+    expect(headers['x-forwarded-host']).toBe('studio.example.test')
+    expect(headers['content-type']).toBe('application/json')
+  })
+
+  it('is not cacheable', async () => {
+    stubFetch()
+    const response = await POST(submit(payload))
+    expect(response.headers.get('cache-control')).toBe('no-store')
+  })
+
+  it('refuses a body over the bound instead of relaying it', async () => {
+    stubFetch()
+    const response = await POST(submit('x'.repeat(65 * 1024)))
+    expect(response.status).toBe(413)
+    expect(captured).toHaveLength(0)
+  })
+
+  it('answers 503 rather than failing when no CMS is configured', async () => {
+    process.env = { ...ENV }
+    delete process.env.ESHOBE_CMS_URL
+    delete process.env.ESHOBE_API_KEY
+    stubFetch()
+    const response = await POST(submit(payload))
+    expect(response.status).toBe(503)
+    expect(captured).toHaveLength(0)
+  })
+
+  it('passes a CMS rejection through instead of reporting success', async () => {
+    stubFetch(400, '{"errors":[{"message":"required"}]}')
+    const response = await POST(submit({}))
+    expect(response.status).toBe(400)
+    await expect(response.json()).resolves.toEqual({ errors: [{ message: 'required' }] })
+  })
+
+  it('accepts without contacting the CMS only when development fixtures are on', async () => {
+    process.env.ESHOBE_DEV_FIXTURES = '1'
+    stubFetch()
+    const response = await POST(submit(payload))
+    expect(response.status).toBe(200)
+    expect(captured).toHaveLength(0)
+  })
+})
