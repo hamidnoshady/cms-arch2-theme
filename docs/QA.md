@@ -38,7 +38,7 @@ the resulting screenshots look fine while measuring nothing.
 | Vendored runtime builds | `npm run vendor:build` | passes (8 modules emitted) |
 | TypeScript | `npm run typecheck` | clean, `strict` + `noUncheckedIndexedAccess` + `verbatimModuleSyntax` |
 | ESLint | `npm run lint` | 0 errors, 0 warnings |
-| Unit/integration tests | `npm test` | **9 files, 89 tests, all passing** |
+| Unit/integration tests | `npm test` | **11 files, 105 tests, all passing** |
 | Production build | `npm run build` | Next 16.3.8, compiles, all routes emitted |
 | Browser evidence | `node scripts/screenshots.mjs` | **40 shots, 0 failures**, no page errors, no horizontal overflow |
 | Interaction behaviour | `node scripts/interaction-audit.mjs` | **9/9 checks pass** (keyboard + click entry, no intro replay, focus trap, Escape + focus restoration, scroll-lock cleanup, close on navigation, no double submit, values preserved on failure) |
@@ -61,6 +61,8 @@ excluded), and any of the four failing fails the chain.
 | `tests/content.test.ts` | nav references resolve by **id**; reads are single-locale with `fallbackLocale=false`; the credential travels in a header; the language switch carries a search term |
 | `tests/manifest.test.ts` | manifest ↔ code agreement, neutral identifiers, no unclaimed capability |
 | `tests/components.test.tsx` | server-rendered component output (marks, rules, skeletons) |
+| `tests/api.test.ts` | the public form-submission proxy: no credential/cookie/client-authorization is forwarded, the visitor's host travels as `x-forwarded-host`, the payload is bounded (413), an unconfigured CMS answers 503, and the CMS status is passed through rather than turned into a success |
+| `tests/form.test.tsx` | the CMS-defined form: required fields (incl. consent) block an empty submit with tied `aria-describedby` errors, errors clear on typing, the payload uses CMS field names with booleans stringified, success is announced via `aria-live`, values survive a failure, the control is disabled while in flight, and a filled honeypot is absorbed without a write |
 
 ## 3. Browser evidence
 
@@ -195,7 +197,7 @@ identifier is neutral.
 
 ## 6. Regression list — real defects found and fixed during this work
 
-Each was reproduced in a browser or by a failing test before being fixed (24 items).
+Each was reproduced in a browser or by a failing test before being fixed (25 items).
 
 1. **CSS layers.** `styles/*.css` were unlayered and outranked Tailwind utilities, so
    `md:hidden` and `md:grid-cols-*` silently did nothing (the hamburger showed at 1440px).
@@ -269,7 +271,13 @@ Each was reproduced in a browser or by a failing test before being fixed (24 ite
     Enter control and a lost form submission, neither of which exists on a healthy build.
     `qa-servers.sh` now verifies a real CSS/JS asset per theme at startup, and both
     browser audits refuse to run until the served stylesheet returns `text/css`.
-24. **Dead end without JavaScript.** The entrance's menu is a client state change and the logo,
+24. **DOM leaking between jsdom tests.** Testing Library's automatic cleanup only
+    registers when the test globals are on; this project imports `describe`/`it`
+    explicitly, so a previous test's tree survived and `findByText` matched *two*
+    components — the honeypot test failed for a reason that had nothing to do with the
+    form. `tests/setup.ts` now unmounts after every test (lazily, since most suites run
+    in the `node` environment).
+25. **Dead end without JavaScript.** The entrance's menu is a client state change and the logo,
     rule and cue are server-rendered at `opacity: 0`, so a visitor with scripting off saw a
     blank stage and no way into the site. A `<noscript>` menu now lists the same CMS
     destinations and a no-script stylesheet reveals the stage — captured as shot 40.

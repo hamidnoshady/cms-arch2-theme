@@ -23,5 +23,8 @@ export default defineConfig({
     environment: 'node',
     include: ['tests/**/*.test.ts', 'tests/**/*.test.tsx'],
     restoreMocks: true,
+    // jsdom suites get a real unmount between tests (see the file for why it is not
+    // automatic here).
+    setupFiles: ['tests/setup.ts'],
   },
 })
