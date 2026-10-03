@@ -165,6 +165,12 @@ Kept here because each one looks like an omission until you know it was a decisi
   brief asks for.
 - **No `global-not-found.js`.** Deliberate: it escapes the root layout, which would drop
   the theme's own document, fonts and tokens from the 404 page.
+- **No development-only showcase route.** §8 permits one ("acceptable if useful") but does
+  not require it. Every state it would display — skeletons, empty archives, holding,
+  unreachable CMS, invalid form, long labels, missing logo, reduced motion — is already
+  produced by the fixture CMS and captured or asserted by `scripts/screenshots.mjs`,
+  `scripts/a11y-audit.mjs` and `scripts/interaction-audit.mjs`, so a second surface would
+  add a route that must never be public without proving anything new.
 - **No invented CMS endpoints.** Only the documented `/api/site`, `/api/pages`,
   `/api/posts`, `/api/categories`, `/api/forms/:id`, `/api/search`, `/api/header`,
   `/api/footer`, `/api/form-submissions` and `/api/revalidate` are called. Projects,
